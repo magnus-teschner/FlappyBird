@@ -94,6 +94,7 @@ class CollisionManager:
     def points(self, bird, pipe):
         if pipe.posX + pipe.width < bird.posX -15 and pipe.posX + pipe.width > bird.posX -15.3:
             return True
+        print(pipe)
 
 
 class Score:
@@ -184,14 +185,26 @@ class Button:
 def paint_back():
     screen.fill(bg_color)
 
+
+
+
+
 #Variablen
-counter = 0
+counter1 = 0
+counter2 = 1
+counter3 = 2
 playing = False
+
 
 
 #Objects
 bird = Bird(screen, 230, light_grey, 15)
-pipes = [Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 1025), Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 900)]
+pipes = [Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 900),
+         Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 1100),
+         Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 1400),
+         Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 900),
+         Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 1100),
+         Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 1400)]
 collision = CollisionManager()
 score1 = Score(screen, "0", 50, 15, light_grey)
 score1copy = Score(screen, "0", 250, 100, light_grey)
@@ -214,8 +227,9 @@ while True:
             #Mouse Button über Play Button down
             if playbutton.isOver(pos) and playbutton.state == "visible":
                 #Erstelle drei Pipes als Buffer
-                pipes = [Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1025),
-                         Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 900)]
+                pipes.append(Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 900))
+                pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1300))
+                pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1700))
                 #Restarte Score oben links
                 score1.restart()
                 #Restarte Score in Mitte für Playing = False screen
@@ -238,31 +252,65 @@ while True:
         bird.update()
         bird.draw()
         #Ausgewählte Pipe drawen und moven
-        pipes[counter].move()
-        pipes[counter].draw()
+        pipes[counter1].move()
+        pipes[counter1].draw()
+        pipes[counter2].move()
+        pipes[counter2].draw()
+        pipes[counter3].move()
+        pipes[counter3].draw()
         #Wenn collision bird und pipe playing = False
-        if collision.bird_pipes(pipes[counter], bird):
+        if collision.bird_pipes(pipes[counter1], bird):
             playing = False
         #Wenn collision bird und floor collision = False
         if collision.bird_floors(bird):
             playing = False
         #Wenn pipe an Bird vorbei ohne Collision increase Score by one
-        if collision.points(bird, pipes[counter]):
+        if collision.points(bird, pipes[counter1]):
             score1.increase()
-            "Increase"
+
+        if collision.bird_pipes(pipes[counter2], bird):
+            playing = False
+        #Wenn collision bird und floor collision = False
+        if collision.bird_floors(bird):
+            playing = False
+        #Wenn pipe an Bird vorbei ohne Collision increase Score by one
+        if collision.points(bird, pipes[counter2]):
+            score1.increase()
+
+        if collision.bird_pipes(pipes[counter3], bird):
+            playing = False
+            # Wenn collision bird und floor collision = False
+        if collision.bird_floors(bird):
+            playing = False
+            # Wenn pipe an Bird vorbei ohne Collision increase Score by one
+        if collision.points(bird, pipes[counter3]):
+            score1.increase()
+
 
         #Wenn eine Pipe aus dem Bild raus ist
-        if pipes[counter].state == "out":
+        if pipes[counter1].state == "out":
             #Zwei neue mit random Werten appenden
             pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 900))
-            pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 900))
-            #Wenn der Counter 1 ist setze ihn wieder auf 0 und lösche  beide bereits gefahrenen Pipes aus der Liste
-            if counter == 1:
-                counter = 0
-                del pipes[0:2]
-            #Wenn noch nicht 1 Counter einfach erhöhen
-            else:
-                counter += 1
+            pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1100))
+            pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1400))
+
+            counter1 += 3
+            print(counter1, counter2, counter3)
+        # Wenn eine Pipe aus dem Bild raus ist
+        if pipes[counter2].state == "out":
+
+
+            counter2 += 3
+            print(counter1, counter2, counter3)
+
+        #Wenn eine Pipe aus dem Bild raus ist
+        if pipes[counter3].state == "out":
+
+
+            counter3 += 3
+            print(counter1, counter2, counter3)
+
+
 
     #Wenn playing = False
     if playing == False:
@@ -284,6 +332,15 @@ while True:
         playbutton.draw(screen)
         #Bird Position resetten
         bird.restart()
+        pipes = [Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 900),
+                 Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1300),
+                 Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1600),
+                 Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 900),
+                 Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1100),
+                 Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1400)]
+        counter1 = 0
+        counter2 = 1
+        counter3 = 2
 
     #Display updaten
     pygame.display.update()
