@@ -49,7 +49,7 @@ class Bird:
             self.velocity = 0
     #Restartet Position von Bird bei playing = False
     def restart(self):
-        self.posX = 230
+        self.posX = 100 #230
         self.posY = height // 2
 
 class Pipes:
@@ -212,7 +212,7 @@ while True:
         #Event Mousebutton down
         if event.type == pygame.MOUSEBUTTONDOWN:
             #Mouse Button über Play Button down
-            if playbutton.isOver(pos):
+            if playbutton.isOver(pos) and playbutton.state == "visible":
                 #Erstelle drei Pipes als Buffer
                 pipes = [Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1025),
                          Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 900)]
@@ -229,6 +229,7 @@ while True:
 
 
     if playing == True:
+        playbutton.state = "unvisible"
         #Schwarzer Hintergrund
         paint_back()
         #Score drawen
@@ -265,6 +266,7 @@ while True:
 
     #Wenn playing = False
     if playing == False:
+        playbutton.state = "visible"
         #Wenn Score höher wie bisheriger Highscore setze neuen Highscore
         if score1.points > highscore.points:
             highscore.points = score1.points
