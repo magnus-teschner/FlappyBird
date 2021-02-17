@@ -1,9 +1,11 @@
 import sys, pygame
 import time
 import random
+from Klassen_Flappy_Bird import *
 
 #Pygame initialiseren
 pygame.init()
+clock = pygame.time.Clock()
 
 #Variablen
 width = 500
@@ -15,204 +17,24 @@ bg_color = pygame.Color('grey12')
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Flappy Bird")
 
-
-class Bird:
-    def __init__(self, screen, posX, color, radius):
-        self.screen = screen
-        self.color = color
-        self.posX = posX
-        self.posY = height //2
-        self.gravity = 0.0008
-        self.lift = -0.38
-        self.velocity = 0
-        self.radius = radius
-
-    #Zeichnet Bird als Kreis
-    def draw(self):
-        pygame.draw.circle(self.screen, self.color, (self.posX, self.posY), self.radius)
-
-    #Ändert Bird Richtungsparameter
-    def up(self):
-        self.velocity = self.lift
-
-    #Updatet Position von Bird
-    def update(self):
-        self.velocity += self.gravity
-        self.posY += self.velocity
-
-        if self.posY >= height - self.radius:
-            self.posY = height - self.radius
-            self.velocity = 0
-
-        if self.posY - self.radius <= 0:
-            self.posY = 0 + self.radius
-            self.velocity = 0
-    #Restartet Position von Bird bei playing = False
-    def restart(self):
-        self.posX = 100 #230
-        self.posY = height // 2
-
-class Pipes:
-    def __init__(self, screen, color, height, gap, posX):
-        self.color = color
-        self.screen = screen
-        self.width = 50
-        self.posX = posX
-        self.gap = gap
-        self.posY = 0
-        self.height = height
-        self.state = "in"
-
-    #Malt obere und untere Hälfte getrennt voneinander aber mit gleichen X Koordinaten
-    def draw(self):
-        pygame.draw.rect(self.screen, self.color, (self.posX, self.posY, self.width, self.height))
-        pygame.draw.rect(self.screen, self.color, (self.posX, self.posY + self.height + self.gap, self.width, 900 - self.height - self.gap))
-
-    #Moved pipes über Screen
-    def move(self):
-        self.posX -= 0.3
-
-        #Wenn Pipe zur Hälfte aus Bild raus ändere Status zu out
-        if self.posX < 0 - 25:
-            self.state = "out"
-
-
-class CollisionManager:
-
-    #Checked ob Bird Floor berührt
-    def bird_floors(self, bird):
-        if bird.posY + bird.radius > 899 or bird.posY - bird.radius < 1:
-            return True
-
-    #checked ob bird pipes berührt
-    def bird_pipes(self, pipe, bird):
-        if bird.posY - bird.radius <= pipe.height or bird.posY + bird.radius >= pipe.height + pipe.gap:
-            if bird.posX - bird.radius >= pipe.posX and bird.posX + bird.radius <= pipe.posX + pipe.width:
-                return True
-
-    #Checkt ob Pipe an Bird vorbei ohne Berührung
-    def points(self, bird, pipe):
-        if pipe.posX + pipe.width < bird.posX -15 and pipe.posX + pipe.width > bird.posX -15.3:
-            return True
-        print(pipe)
-
-
-class Score:
-    def __init__(self, screen, points, posX, posY, color):
-        self.screen = screen
-        self.color = color
-        self.points = points
-        self.posX = posX
-        self.posY = posY
-        self.font = pygame.font.SysFont("monospace", 80, bold = True)
-        self.label = self.font.render(self.points, 0, self.color )
-        self.draw()
-
-    #Label zeichnen
-    def draw(self):
-        self.screen.blit(self.label, (self.posX - self.label.get_rect().width // 2, self.posY))
-
-    #Punkte erhöhen und Label neu rendern
-    def increase(self):
-        points = int(self.points) + 1
-        self.points = str(points)
-        self.label = self.font.render(self.points, 0, light_grey)
-
-    #Punkte auf null und neu rendern
-    def restart(self):
-        self.points = "0"
-        self.label = self.font.render(self.points, 0, light_grey)
-
-    #Punkte von anderer Quelle aktualisiert übernehmen
-    def set(self):
-        self.label = self.font.render(self.points, 0, light_grey)
-
-class Textausagbe:
-    def __init__(self, screen, posX, posY, color, text):
-        self.screen = screen
-        self.color = color
-        self.text = text
-        self.posX = posX
-        self.posY = posY
-        self.font = pygame.font.SysFont("monospace", 80, bold = True)
-        self.label = self.font.render(text, 0, self.color )
-        self.draw()
-
-    #Label zeichnen
-    def draw(self):
-        self.screen.blit(self.label, (self.posX - self.label.get_rect().width // 2, self.posY))
-
-
-
-class Button:
-    def __init__(self, color, posX, posY, width, height, text='', size = 25):
-        self.color = color
-        self.posX = posX
-        self.posY = posY
-        self.width = width
-        self.height = height
-        self.text = text
-        self.size = size
-        self.screen = screen
-        self.state = "unvisible"
-
-    #Draw button
-    def draw(self, screen, outline=None):
-        #Wenn Outline größeres Rechteck mit anderer Farbe unten drunter
-        if outline:
-            pygame.draw.rect(screen, outline, (self.posX - 2, self.posY - 2, self.width + 4, self.height + 4), 0)
-
-        #Rechteck zeichnen
-        pygame.draw.rect(screen, self.color, (self.posX, self.posY, self.width, self.height), 0)
-
-        #Wenn Text nicht leer ist
-        if self.text != '':
-            font = pygame.font.SysFont('monospace', self.size, bold = True)
-            text = font.render(self.text, 1, (0, 0, 0))
-            screen.blit(text, (
-            self.posX + (self.width / 2 - text.get_width() / 2), self.posY + (self.height / 2 - text.get_height() / 2)))
-
-    #Checken ob Maus über Button, wenn ja return True
-    def isOver(self, pos):
-        # Pos is the mouse position or a tuple of (x,y) coordinates
-        if pos[0] > self.posX and pos[0] < self.posX + self.width:
-            if pos[1] > self.posY and pos[1] < self.posY + self.height:
-                return True
-
-        return False
-
 #Functions
 def paint_back():
     screen.fill(bg_color)
 
-
-
-
-
 #Variablen
-counter1 = 0
-counter2 = 1
-counter3 = 2
+clock.tick(60)
 playing = False
-
-
 
 #Objects
 bird = Bird(screen, 230, light_grey, 15)
-pipes = [Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 900),
-         Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 1100),
-         Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 1400),
-         Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 900),
-         Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 1100),
-         Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 1400)]
+pipes = []
 collision = CollisionManager()
 score1 = Score(screen, "0", 50, 15, light_grey)
 score1copy = Score(screen, "0", 250, 100, light_grey)
 highscore = Score(screen, "0", 250, 280,light_grey)
 ausgabeh = Textausagbe(screen, 250, 200, light_grey,"Highscore")
 ausgabes = Textausagbe(screen, 250, 30, light_grey, "Score")
-playbutton = Button(light_grey, 200, 400, 100, 50, "Play")
-
+playbutton = Button(screen, light_grey, 200, 400, 100, 50, "Play")
 
 #Main-Game-Loop
 while True:
@@ -228,8 +50,6 @@ while True:
             if playbutton.isOver(pos) and playbutton.state == "visible":
                 #Erstelle drei Pipes als Buffer
                 pipes.append(Pipes(screen, light_grey,random.randint(100, 600), random.randint(250, 350), 900))
-                pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1300))
-                pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1700))
                 #Restarte Score oben links
                 score1.restart()
                 #Restarte Score in Mitte für Playing = False screen
@@ -241,82 +61,34 @@ while True:
     if keys_pressed[pygame.K_SPACE]:
         bird.up()
 
-
     if playing == True:
-        playbutton.state = "unvisible"
         #Schwarzer Hintergrund
         paint_back()
+        for pipe in pipes:
+            pipe.move()
+            pipe.draw()
+            if pipe.collide(bird):
+                playing = False
+            if pipe.state == "out":
+                del pipes[0:1]
+            if pipe.append():
+                pipes.append(Pipes(screen, light_grey, random.randint(0, 700), random.randint(200, 300), 900))
+            if pipe.points(bird):
+                score1.increase()
+        if collision.bird_floors(bird):
+            playing = False
+        playbutton.state = "unvisible"
         #Score drawen
         score1.draw()
         #Bird update und draw
         bird.update()
         bird.draw()
-        #Ausgewählte Pipe drawen und moven
-        pipes[counter1].move()
-        pipes[counter1].draw()
-        pipes[counter2].move()
-        pipes[counter2].draw()
-        pipes[counter3].move()
-        pipes[counter3].draw()
-        #Wenn collision bird und pipe playing = False
-        if collision.bird_pipes(pipes[counter1], bird):
-            playing = False
-        #Wenn collision bird und floor collision = False
-        if collision.bird_floors(bird):
-            playing = False
-        #Wenn pipe an Bird vorbei ohne Collision increase Score by one
-        if collision.points(bird, pipes[counter1]):
-            score1.increase()
-
-        if collision.bird_pipes(pipes[counter2], bird):
-            playing = False
-        #Wenn collision bird und floor collision = False
-        if collision.bird_floors(bird):
-            playing = False
-        #Wenn pipe an Bird vorbei ohne Collision increase Score by one
-        if collision.points(bird, pipes[counter2]):
-            score1.increase()
-
-        if collision.bird_pipes(pipes[counter3], bird):
-            playing = False
-            # Wenn collision bird und floor collision = False
-        if collision.bird_floors(bird):
-            playing = False
-            # Wenn pipe an Bird vorbei ohne Collision increase Score by one
-        if collision.points(bird, pipes[counter3]):
-            score1.increase()
-
-
-        #Wenn eine Pipe aus dem Bild raus ist
-        if pipes[counter1].state == "out":
-            #Zwei neue mit random Werten appenden
-            pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 900))
-            pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1100))
-            pipes.append(Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1400))
-
-            counter1 += 3
-            print(counter1, counter2, counter3)
-        # Wenn eine Pipe aus dem Bild raus ist
-        if pipes[counter2].state == "out":
-
-
-            counter2 += 3
-            print(counter1, counter2, counter3)
-
-        #Wenn eine Pipe aus dem Bild raus ist
-        if pipes[counter3].state == "out":
-
-
-            counter3 += 3
-            print(counter1, counter2, counter3)
-
-
 
     #Wenn playing = False
     if playing == False:
         playbutton.state = "visible"
         #Wenn Score höher wie bisheriger Highscore setze neuen Highscore
-        if score1.points > highscore.points:
+        if int(score1.points) > int(highscore.points):
             highscore.points = score1.points
         #Score für Mitte von Spielscore copyen
         score1copy.points = score1.points
@@ -332,15 +104,9 @@ while True:
         playbutton.draw(screen)
         #Bird Position resetten
         bird.restart()
-        pipes = [Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 900),
-                 Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1300),
-                 Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1600),
-                 Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 900),
-                 Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1100),
-                 Pipes(screen, light_grey, random.randint(100, 600), random.randint(250, 350), 1400)]
-        counter1 = 0
-        counter2 = 1
-        counter3 = 2
+        pipes = []
+
+
 
     #Display updaten
     pygame.display.update()
